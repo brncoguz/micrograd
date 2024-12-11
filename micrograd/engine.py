@@ -1,3 +1,4 @@
+import math
 
 class Value:
     """ stores a single scalar value and its gradient """
@@ -51,24 +52,33 @@ class Value:
         out._backward = _backward
 
         return out
+    
+    def exp(self):
+        out = Value(math.exp(self.data), (self,), 'exp')
 
-    def backward(self):
+        def _backward():
+            self.grad += out.grad * out.data
 
-        # topological order all of the children in the graph
+        out._backward = _backward
+        return out
+
+    def backward(self, verbose=False):
+        self.grad = 1.0
         topo = []
         visited = set()
+
         def build_topo(v):
             if v not in visited:
                 visited.add(v)
                 for child in v._prev:
                     build_topo(child)
                 topo.append(v)
-        build_topo(self)
 
-        # go one variable at a time and apply the chain rule to get its gradient
-        self.grad = 1
-        for v in reversed(topo):
-            v._backward()
+        build_topo(self)
+        for node in reversed(topo):
+            node._backward()
+            if verbose:
+                print(f'Node {node}: grad={node.grad}')
 
     def __neg__(self): # -self
         return self * -1
