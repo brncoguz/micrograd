@@ -53,13 +53,15 @@ class Value:
 
         return out
     
-    def exp(self):
-        out = Value(math.exp(self.data), (self,), 'exp')
+    def tanh(self):
+        t = math.tanh(self.data)
+        out = Value(t, (self,), 'tanh')
 
         def _backward():
-            self.grad += out.grad * out.data
+            self.grad += (1 - t**2) * out.grad
 
         out._backward = _backward
+
         return out
 
     def backward(self, verbose=False):
